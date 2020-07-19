@@ -6,6 +6,7 @@ pub enum Cmd {
   // your custom commands
   // multiple arguments are allowed
   // note that rename_all = "camelCase": you need to use "myCustomCommand" on JS
-  StartBinderProxy {},
+  StartBinderProxy { callback: String, error: String },
+  StopBinderProxy { id: u32 },
   CheckAccount { callback: String, error: String },
 }

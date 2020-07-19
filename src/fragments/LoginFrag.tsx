@@ -9,7 +9,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogContentText,
-  DialogActions
+  DialogActions,
 } from "@material-ui/core";
 import { useSelector, useDispatch } from "react-redux";
 import { l10nSelector } from "../redux/l10n";
@@ -24,7 +24,7 @@ const codeOK = 0;
 const codeExists = 12;
 const codeBadCaptcha = 13;
 
-const LoginFrag: React.FC = props => {
+const LoginFrag: React.FC = (props) => {
   const [uname, setUname] = useState("");
   const [pwd, setPwd] = useState("");
   const [busy, setBusy] = useState(false);
@@ -75,7 +75,7 @@ const LoginFrag: React.FC = props => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={_ => setBusy(false)}>OK</Button>
+          <Button onClick={(_) => setBusy(false)}>OK</Button>
         </DialogActions>
       </>
     );
@@ -116,13 +116,13 @@ const LoginFrag: React.FC = props => {
             style={{
               maxHeight: "20vh",
               maxWidth: "50vw",
-              paddingBottom: "30px"
+              paddingBottom: "30px",
             }}
             src={require("../assets/images/logo-naked.svg")}
           />{" "}
           <br />
           <form
-            onSubmit={async e => {
+            onSubmit={async (e) => {
               e.preventDefault();
               doLogin();
             }}
@@ -133,7 +133,7 @@ const LoginFrag: React.FC = props => {
               fullWidth
               variant="outlined"
               style={{ paddingBottom: "16px" }}
-              onChange={evt => setUname(evt.target.value)}
+              onChange={(evt) => setUname(evt.target.value)}
               value={uname}
               autoCapitalize="off"
             />
@@ -144,7 +144,7 @@ const LoginFrag: React.FC = props => {
               type="password"
               variant="outlined"
               style={{ paddingBottom: "16px" }}
-              onChange={evt => setPwd(evt.target.value)}
+              onChange={(evt) => setPwd(evt.target.value)}
               value={pwd}
               helperText={pwd + " "}
             />
@@ -161,7 +161,7 @@ const LoginFrag: React.FC = props => {
             <Button
               variant="contained"
               style={{ marginBottom: "8px", textTransform: "none" }}
-              onClick={_ => doRegister()}
+              onClick={(_) => doRegister()}
             >
               {l10n.registerblurb}
             </Button>
@@ -191,7 +191,7 @@ const Register = (props: {
 
   const fetchCaptcha = async () => {
     const [id, c] = await getCaptcha();
-    console.log(c);
+    console.log("fetchCaptcha", c, id);
     setCaptchaData(c);
     setCaptchaID(id);
   };
@@ -201,7 +201,7 @@ const Register = (props: {
       if (!uname.match(validUnameRegex)) {
         setErrString(l10n.unameillegal);
       } else {
-        console.log("attempting to register account");
+        console.log("attempting to register account", captchaID, captchaSoln);
         const retcode = await registerAccount(
           uname,
           pwd,
@@ -245,7 +245,7 @@ const Register = (props: {
           variant="outlined"
           size="small"
           style={{ marginBottom: "8px", marginTop: "8px" }}
-          onChange={evt => setUname(evt.target.value)}
+          onChange={(evt) => setUname(evt.target.value)}
           value={uname}
         />
         <TextField
@@ -256,7 +256,7 @@ const Register = (props: {
           variant="outlined"
           size="small"
           style={{ marginBottom: "8px", marginTop: "8px" }}
-          onChange={evt => setPwd(evt.target.value)}
+          onChange={(evt) => setPwd(evt.target.value)}
           value={pwd}
           helperText={pwd + " "}
         />
@@ -268,7 +268,7 @@ const Register = (props: {
               src={captchaData}
               height="60"
               width="240"
-              onClick={_ => {
+              onClick={(_) => {
                 setCaptchaData("");
                 fetchCaptcha();
               }}
@@ -283,15 +283,18 @@ const Register = (props: {
           variant="outlined"
           size="small"
           style={{ marginBottom: "8px", marginTop: "8px" }}
-          onChange={evt => setCaptchaSoln(evt.target.value)}
+          onChange={(evt) => {
+            console.log("setting stuff", evt.target.value, captchaSoln);
+            setCaptchaSoln(evt.target.value);
+          }}
           value={captchaSoln}
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={_ => props.onCancel()} disabled={busy}>
+        <Button onClick={(_) => props.onCancel()} disabled={busy}>
           {l10n.cancel}
         </Button>
-        <Button color="primary" onClick={_ => doRegister()} disabled={busy}>
+        <Button color="primary" onClick={(_) => doRegister()} disabled={busy}>
           {l10n.registerblurb}
         </Button>
       </DialogActions>
@@ -302,18 +305,19 @@ const Register = (props: {
 const proxClient = axios.create({ baseURL: "http://127.0.0.1:23456" });
 axiosRetry(proxClient, {
   retries: 1000,
-  retryDelay: exponentialDelay
+  retryDelay: exponentialDelay,
 });
 
 const getCaptcha = async () => {
-  const pid = startBinderProxy();
+  const pid = await startBinderProxy();
   try {
     const response = await proxClient.get("/captcha", {
-      responseType: "arraybuffer"
+      responseType: "arraybuffer",
     });
     const b64img =
       "data:image/png;base64," +
       new Buffer(response.data, "binary").toString("base64");
+    console.log("headers", response.headers);
     const captchaID = response.headers["x-captcha-id"] as string;
     return [captchaID, b64img];
   } finally {
@@ -327,15 +331,17 @@ const registerAccount = async (
   captchaID: string,
   captchaSoln: string
 ) => {
-  const pid = startBinderProxy();
+  const pid = await startBinderProxy();
+  await new Promise((r) => setTimeout(r, 1000));
   try {
     while (true) {
       try {
+        console.log("trying captcha " + captchaID);
         const resp = await proxClient.post("/register", {
           Username: username,
           Password: password,
           CaptchaID: captchaID,
-          CaptchaSoln: captchaSoln
+          CaptchaSoln: captchaSoln,
         });
         if (resp.status !== 200) {
           return codeBadNet;
@@ -343,6 +349,7 @@ const registerAccount = async (
           return codeOK;
         }
       } catch (err) {
+        console.log(err);
         if (/403/.test(err.toString())) {
           return codeExists;
         } else if (/400/.test(err.toString())) {

@@ -46,9 +46,11 @@ export function checkAccount(uname, pwd) {
 export function startBinderProxy() {
   if (platform === "android") {
     let x = window.Android.jsStartProxBinder();
-    return x;
+    return new Promise((resolve, reject) => {
+      resolve(x);
+    });
   } else {
-    alert("tauri start binder proxy");
+    return tauri.promisified({ cmd: "startBinderProxy" });
   }
 }
 
@@ -58,7 +60,9 @@ export function stopBinderProxy(pid) {
     window.Android.jsStopProxBinder(pid);
     return;
   } else {
-    alert("tauri start binder proxy");
+    console.log(pid);
+    tauri.invoke({ cmd: "stopBinderProxy", id: pid });
+    return;
   }
 }
 

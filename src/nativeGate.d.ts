@@ -15,7 +15,7 @@ export function getPlatform(): string;
 
 export async function checkAccount(uname: string, pwd: string);
 
-export function startBinderProxy(): number;
+export async function startBinderProxy(): Promise<number>;
 
 export function stopBinderProxy(pid: number);
 
